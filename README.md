@@ -1,14 +1,46 @@
 # Limits
 
 A macOS menu bar readout of how much of your Claude Code and Codex rate-limit
-windows you have left, and when each one resets.
+windows you have left, and when each one resets. It costs no tokens: the numbers
+come from each tool's own usage endpoint, and nothing is ever sent to a model.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/menubar-dark.png">
+  <img src="docs/menubar-light.png" width="250"
+       alt="The menu bar item reading: CC 16 percent, 1 hour 31 minutes left, in the default colour; CDX 94 percent, 1 hour 43 minutes left, in orange">
+</picture>
+
+`CC` is Claude Code and `CDX` is Codex. Each shows how much of the 5-hour window
+is spent and how long until it resets, and each is coloured on its own, so one
+can go red while the other stays quiet.
+
+Click it for both windows of both tools, the reset times, roughly how many
+prompts are left, and which Codex models are currently available.
+
+## Install
+
+Needs macOS 14 or later and Apple's command line tools. If you do not have them,
+macOS will offer to install them when you run `xcode-select --install`.
+
+Clone this repository, then:
 
 ```
-CC 22%·1h42  CDX 0%·5h00
+./install.sh
 ```
 
-Click it for the 5-hour and weekly windows of both tools, the reset times, and
-which Codex models are currently available.
+That compiles the app, puts it in `~/Applications`, and starts it. Run it again
+any time to upgrade; it stops the running copy first. `make install` does the
+same thing.
+
+To remove it and everything it stored:
+
+```
+./uninstall.sh
+```
+
+Building it yourself is also the path of least resistance on an unsigned app: a
+copy downloaded from the web picks up a quarantine flag and Gatekeeper blocks
+it, while a locally built one just runs.
 
 ## Menu bar colours
 
@@ -143,15 +175,13 @@ to sign a request and are never logged or stored by this app.
 - No app icon, and the build is ad-hoc signed, so macOS treats it as an
   unidentified developer.
 
-## Build
+## Building by hand
 
-```
-./build.sh                       # installs to ~/Applications/Limits.app
-./build.sh /Applications/Limits.app
-open ~/Applications/Limits.app
-```
+`./build.sh` compiles straight to `~/Applications/Limits.app`, or to a path you
+pass it. There are no dependencies beyond the command line tools.
 
-Requires the Xcode command line tools. No other dependencies.
+`./shots.sh` redraws the menu bar image above from the title the app actually
+installs, so the picture in this file cannot drift from the code.
 
 On first launch macOS asks to allow notifications.
 

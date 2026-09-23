@@ -29,8 +29,20 @@ final class Store: ObservableObject {
     private var pollTimer: Timer?
     private var tickTimer: Timer?
     private var polling = false
+    /// Holds fixed readings and never polls, so the menu bar title can be
+    /// rendered for the README without a live account.
+    private let fixed: Bool
+
+    init(fixed readings: [Provider: Reading]) {
+        self.fixed = true
+        self.readings = readings
+        self.lastPoll = Date()
+        self.menuTitle = NSAttributedString()
+        self.menuTitle = buildTitle()
+    }
 
     init() {
+        self.fixed = false
         UserDefaults.standard.register(defaults: Alerts.defaults)
         restore()
         pollTimer = .scheduledTimer(withTimeInterval: pollEvery, repeats: true) { [weak self] _ in
@@ -54,13 +66,14 @@ final class Store: ObservableObject {
     /// Called when the panel opens. The countdowns are computed locally, so an
     /// open does not need a fresh percentage.
     func refreshIfStale(olderThan age: TimeInterval = 120) async {
+        if fixed { return }
         if let lastPoll, Date().timeIntervalSince(lastPoll) < age { return }
         await poll()
     }
 
     /// `force` is the Refresh button: it ignores the per-provider backoff.
     func poll(force: Bool = false) async {
-        guard !polling else { return }
+        guard !fixed, !polling else { return }
         polling = true
         defer { polling = false }
 
