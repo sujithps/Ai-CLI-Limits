@@ -11,8 +11,8 @@ enum Prompts {
 
     static func used(by provider: Provider, from start: Date, to end: Date) -> Int? {
         switch provider {
-        case .claude: return claude(from: start, to: end)
-        case .codex: return codex(from: start, to: end)
+        case .claude: return claude(in: NSHomeDirectory() + "/.claude/projects", from: start, to: end)
+        case .codex: return codex(in: NSHomeDirectory() + "/.codex", from: start, to: end)
         }
     }
 
@@ -20,8 +20,7 @@ enum Prompts {
 
     /// Transcript lines typed by the person, as opposed to tool results and
     /// injected context, which are also recorded with role "user".
-    private static func claude(from start: Date, to end: Date) -> Int? {
-        let root = NSHomeDirectory() + "/.claude/projects"
+    static func claude(in root: String, from start: Date, to end: Date) -> Int? {
         let fm = FileManager.default
         guard let projects = try? fm.contentsOfDirectory(atPath: root) else { return nil }
 
@@ -67,8 +66,7 @@ enum Prompts {
     /// One row per prompt in the CLI's thread store, counted by start time: a
     /// turn still running has already spent quota. The filename carries a
     /// schema version, so take the newest rather than pinning to one.
-    private static func codex(from start: Date, to end: Date) -> Int? {
-        let dir = NSHomeDirectory() + "/.codex"
+    static func codex(in dir: String, from start: Date, to end: Date) -> Int? {
         guard let names = try? FileManager.default.contentsOfDirectory(atPath: dir) else { return nil }
         guard let store = names
             .filter({ $0.hasPrefix("thread_history_") && $0.hasSuffix(".sqlite") })

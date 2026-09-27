@@ -210,6 +210,27 @@ pass `--live` to draw your own usage instead.
 
 `./icon.sh` redraws the app icon from `Tools/Icon.swift`.
 
+## Tests
+
+```
+./test.sh
+```
+
+or `make test`. Arguments pass through to `swift test`, so `./test.sh --filter
+Prompts` runs one area. The tests use Swift Testing, which the command line
+tools include; XCTest is not, so nothing here needs Xcode.
+
+`Package.swift` exists only for the tests: Swift Package Manager cannot produce
+an app bundle, so the app itself still comes from `build.sh`, and the two
+compile the same files.
+
+What is covered is the logic that does not need an account or a screen: the
+window arithmetic and burnout projection, the prompts-left range and its
+rounding, the colour thresholds, the parsers for both usage endpoints and for
+Claude Code's cache file, the prompt counters against fixture transcripts and a
+fixture Codex database, and the text and colours of the menu bar title. The
+network calls, the Keychain, notifications and the panel are not under test.
+
 On first launch macOS asks to allow notifications.
 
 The Keychain is only read when a live Claude call is actually needed, which the

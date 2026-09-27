@@ -1,6 +1,6 @@
 APP := $(HOME)/Applications/AI CLI Limits.app
 
-.PHONY: install run uninstall clean
+.PHONY: install run uninstall clean test
 
 install:
 	@./install.sh
@@ -13,3 +13,5 @@ uninstall:
 clean:
 	@rm -rf build
 
+test:
+	@./test.sh
