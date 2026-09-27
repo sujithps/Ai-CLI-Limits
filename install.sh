@@ -1,27 +1,32 @@
 #!/bin/bash
-# Builds Limits and starts it. Safe to re-run to upgrade.
+# Builds AI CLI Limits and starts it. Safe to re-run to upgrade.
 set -euo pipefail
 
-APP="$HOME/Applications/Limits.app"
+APP="$HOME/Applications/AI CLI Limits.app"
 
 # Piped from curl, there are no sources on disk yet, so fetch them first.
 if [ -f "${BASH_SOURCE[0]:-}" ] && [ -d "$(dirname "${BASH_SOURCE[0]}")/Sources" ]; then
   SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 else
-  REPO="${LIMITS_REPO:-}"
-  if [ -z "$REPO" ]; then
-    echo "Set LIMITS_REPO to the git URL to install from, or run this inside a clone." >&2
-    exit 1
-  fi
-  SRC="$(mktemp -d)/limits"
+  REPO="${AI_CLI_LIMITS_REPO:-https://github.com/sujithps/Ai-CLI-Limits.git}"
+  SRC="$(mktemp -d)/ai-cli-limits"
   echo "Fetching $REPO"
   git clone --depth 1 --quiet "$REPO" "$SRC"
 fi
 
+# Before the rename this installed as Limits.app; two copies would show two
+# menu bar items, so retire the old one.
+if [ -d "$HOME/Applications/Limits.app" ]; then
+  echo "Removing the copy installed under the old name, Limits"
+  pkill -f "Limits.app/Contents/MacOS/Limits" 2>/dev/null || true
+  rm -rf "$HOME/Applications/Limits.app"
+  defaults delete local.limits 2>/dev/null || true
+fi
+
 # Replacing the binary under a running copy leaves a stale process behind.
-if pgrep -f "Limits.app/Contents/MacOS/Limits" >/dev/null 2>&1; then
+if pgrep -f "AI CLI Limits.app/Contents/MacOS/AI CLI Limits" >/dev/null 2>&1; then
   echo "Stopping the running copy"
-  pkill -f "Limits.app/Contents/MacOS/Limits" || true
+  pkill -f "AI CLI Limits.app/Contents/MacOS/AI CLI Limits" || true
   sleep 1
 fi
 
@@ -30,7 +35,7 @@ open "$APP"
 
 cat <<DONE
 
-Limits is running. Look for it in the menu bar, near the clock.
+AI CLI Limits is running. Look for it in the menu bar, near the clock.
 
 macOS will ask once to allow notifications, and may ask once for access to the
 Claude Code keychain item; choose Always Allow so it can read usage unattended.

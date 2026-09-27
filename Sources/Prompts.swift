@@ -112,7 +112,7 @@ enum Prompts {
     private static func privateCopy(of path: String) -> URL? {
         let fm = FileManager.default
         let dir = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("limits-codex-\(UUID().uuidString)")
+            .appendingPathComponent("ai-cli-limits-codex-\(UUID().uuidString)")
         guard (try? fm.createDirectory(at: dir, withIntermediateDirectories: true)) != nil else { return nil }
 
         let target = dir.appendingPathComponent(URL(fileURLWithPath: path).lastPathComponent)

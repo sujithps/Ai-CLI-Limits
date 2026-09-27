@@ -1,10 +1,10 @@
 #!/bin/bash
-# Compiles Limits.app. Takes an optional destination path.
+# Compiles AI CLI Limits.app. Takes an optional destination path.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP="${1:-$HOME/Applications/Limits.app}"
-BIN="$APP/Contents/MacOS/Limits"
+APP="${1:-$HOME/Applications/AI CLI Limits.app}"
+BIN="$APP/Contents/MacOS/AI CLI Limits"
 
 if ! command -v swiftc >/dev/null 2>&1; then
   cat >&2 <<'MISSING'
@@ -19,18 +19,21 @@ fi
 
 MAJOR=$(sw_vers -productVersion | cut -d. -f1)
 if [ "$MAJOR" -lt 14 ]; then
-  echo "Limits needs macOS 14 or later; this is $(sw_vers -productVersion)." >&2
+  echo "AI CLI Limits needs macOS 14 or later; this is $(sw_vers -productVersion)." >&2
   exit 1
 fi
 
 # Without an explicit target, swiftc stamps the host OS as the minimum and the
 # app refuses to launch on anything older.
 TARGET="$(uname -m)-apple-macos14.0"
+SDK="$(Tools/sdk.sh)"
 
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
-swiftc -O -swift-version 5 -target "$TARGET" \
+# $SDK is unquoted on purpose: it is empty or two words.
+swiftc -O -swift-version 5 -target "$TARGET" $SDK \
   -framework SwiftUI -framework AppKit -framework UserNotifications \
   -framework ServiceManagement -framework Security -lsqlite3 \
   -o "$BIN" Sources/*.swift

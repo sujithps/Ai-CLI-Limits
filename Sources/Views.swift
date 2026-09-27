@@ -235,7 +235,7 @@ private struct Settings: View {
         VStack(alignment: .leading, spacing: 7) {
             Text("Notify me when").font(.system(size: 11, weight: .semibold))
             if !notificationsAllowed {
-                Text("Notifications are turned off for Limits in System Settings.")
+                Text("Notifications are turned off for AI CLI Limits in System Settings.")
                     .font(.system(size: 10)).foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }

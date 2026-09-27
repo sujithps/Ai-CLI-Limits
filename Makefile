@@ -1,4 +1,4 @@
-APP := $(HOME)/Applications/Limits.app
+APP := $(HOME)/Applications/AI CLI Limits.app
 
 .PHONY: install run uninstall clean
 

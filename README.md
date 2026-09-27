@@ -1,4 +1,6 @@
-# Limits
+<img src="docs/icon.png" width="96" align="right" alt="The app icon: two partly filled gauge rings on a dark rounded square">
+
+# AI CLI Limits
 
 A macOS menu bar readout of how much of your Claude Code and Codex rate-limit
 windows you have left, and when each one resets. It costs no tokens: the numbers
@@ -17,20 +19,37 @@ can go red while the other stays quiet.
 Click it for both windows of both tools, the reset times, roughly how many
 prompts are left, and which Codex models are currently available.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/panel-dark.png">
+  <img src="docs/panel-light.png" width="304"
+       alt="The panel: Claude Code at 16 percent of the 5 hour session and 47 percent of the week, with reset times and a prompts-left estimate; Codex at 94 percent of the session in orange, with a warning that at this pace it runs out before the reset, and a list of models and whether each is available">
+</picture>
+
+The figures in both pictures are samples, drawn by the same code that draws
+the real thing.
+
 ## Install
 
 Needs macOS 14 or later and Apple's command line tools. If you do not have them,
 macOS will offer to install them when you run `xcode-select --install`.
 
-Clone this repository, then:
+One line, which clones the repository to a temporary folder and builds from it:
 
 ```
+curl -fsSL https://raw.githubusercontent.com/sujithps/Ai-CLI-Limits/main/install.sh | bash
+```
+
+Or clone it and run the same script from inside:
+
+```
+git clone https://github.com/sujithps/Ai-CLI-Limits.git
+cd Ai-CLI-Limits
 ./install.sh
 ```
 
-That compiles the app, puts it in `~/Applications`, and starts it. Run it again
-any time to upgrade; it stops the running copy first. `make install` does the
-same thing.
+Either way it compiles the app, puts it in `~/Applications`, and starts it. Run
+it again any time to upgrade; it stops the running copy first. `make install`
+does the same thing from a clone.
 
 To remove it and everything it stored:
 
@@ -172,16 +191,24 @@ to sign a request and are never logged or stored by this app.
   could serve the same purpose.
 - The prompts-left estimate covers the 5-hour window only. The weekly window
   needs a count over seven days of logs.
-- No app icon, and the build is ad-hoc signed, so macOS treats it as an
-  unidentified developer.
+- The build is ad-hoc signed, so macOS treats it as an unidentified developer.
 
 ## Building by hand
 
-`./build.sh` compiles straight to `~/Applications/Limits.app`, or to a path you
-pass it. There are no dependencies beyond the command line tools.
+`./build.sh` compiles straight to `~/Applications/AI CLI Limits.app`, or to a
+path you pass it. There are no dependencies beyond the command line tools.
 
-`./shots.sh` redraws the menu bar image above from the title the app actually
-installs, so the picture in this file cannot drift from the code.
+The macOS 27 command line tools ship a SwiftUI whose property wrappers are
+macros but not the plugin that expands them, so `@State` fails to compile
+against the default SDK. The build script notices and falls back to the newest
+older SDK still installed beside it, and says so. If none is left, install Xcode
+or an earlier command line tools package.
+
+`./shots.sh` redraws the pictures above from the views the app actually
+installs, so they cannot drift from the code. It uses fixed sample figures;
+pass `--live` to draw your own usage instead.
+
+`./icon.sh` redraws the app icon from `Tools/Icon.swift`.
 
 On first launch macOS asks to allow notifications.
 
