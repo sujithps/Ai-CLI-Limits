@@ -4,6 +4,36 @@ import Security
 /// Reads the tokens the two CLIs already wrote. Nothing here refreshes or
 /// rewrites them: token rotation is the CLIs' job, and racing them would
 /// invalidate a live login.
+/// A value read once and kept, so a read that can prompt the user (the
+/// Keychain) happens once per launch and once per rotation, not once per poll.
+final class Held<Value>: @unchecked Sendable {
+    private let lock = NSLock()
+    private let read: () throws -> Value
+    private var value: Value?
+
+    init(read: @escaping () throws -> Value) {
+        self.read = read
+    }
+
+    /// The held value, or a fresh read when nothing is held. A read that
+    /// throws holds nothing, so the next call tries again.
+    func get() throws -> Value {
+        lock.lock()
+        defer { lock.unlock() }
+        if let value { return value }
+        let fresh = try read()
+        value = fresh
+        return fresh
+    }
+
+    /// Forget the held value, so the next `get` reads again.
+    func drop() {
+        lock.lock()
+        defer { lock.unlock() }
+        value = nil
+    }
+}
+
 enum Credentials {
 
     struct Claude {

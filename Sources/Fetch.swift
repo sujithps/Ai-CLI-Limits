@@ -29,24 +29,26 @@ enum Fetch {
 
         // Only the live call needs a token, and the token is the only thing
         // that touches the Keychain, which can put a prompt in front of the
-        // user. The cache path above never asks.
+        // user. The cache path above never asks, and the token is held after
+        // its first read so a prompt is once per launch, not once per poll.
         let creds: Credentials.Claude
         do {
-            creds = try Credentials.claude()
+            creds = try claudeCredentials.get()
         } catch Credentials.Failure.notSignedIn {
             return .signedOut
         } catch {
             return .failed(error.localizedDescription)
         }
-        var request = URLRequest(url: URL(string: "https://api.anthropic.com/api/oauth/usage")!)
-        request.setValue("Bearer \(creds.token)", forHTTPHeaderField: "Authorization")
-        request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
 
-        let live = await load(request) { root in
-            var snapshot = claudeSnapshot(root, plan: creds.plan)
-            snapshot.promptsUsed = countPrompts(.claude, in: snapshot)
-            return snapshot
+        var live = await claudeUsage(with: creds)
+        if case .signedOut = live {
+            // Rejected. Claude Code rotates the token underneath this app, so
+            // the held copy may simply be old: read it once more before
+            // telling the user to sign in.
+            claudeCredentials.drop()
+            if let fresh = try? claudeCredentials.get(), fresh.token != creds.token {
+                live = await claudeUsage(with: fresh)
+            }
         }
         switch live {
         case .ok, .signedOut:
@@ -55,6 +57,20 @@ enum Fetch {
             guard let cached, cached.windowAlive else { return live }
             return .degraded(cached.snapshot,
                              note: "Using Claude Code's cached figure.")
+        }
+    }
+
+    private static let claudeCredentials = Held(read: Credentials.claude)
+
+    private static func claudeUsage(with creds: Credentials.Claude) async -> FetchResult {
+        var request = URLRequest(url: URL(string: "https://api.anthropic.com/api/oauth/usage")!)
+        request.setValue("Bearer \(creds.token)", forHTTPHeaderField: "Authorization")
+        request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        return await load(request) { root in
+            var snapshot = claudeSnapshot(root, plan: creds.plan)
+            snapshot.promptsUsed = countPrompts(.claude, in: snapshot)
+            return snapshot
         }
     }
 
@@ -112,7 +128,14 @@ enum Fetch {
 
         var snapshot = claudeSnapshot(utilization, plan: plan)
         snapshot.fetchedAt = Date(timeIntervalSince1970: milliseconds / 1000)
-        let alive = snapshot.session?.resetsAt.map { $0 > now } ?? false
+        // Before the first prompt of a window there is no reset time and 0%
+        // used. That is a current figure, not an expired one.
+        let alive: Bool
+        if let resetsAt = snapshot.session?.resetsAt {
+            alive = resetsAt > now
+        } else {
+            alive = snapshot.session?.percent == 0
+        }
         return (snapshot, alive)
     }
 

@@ -233,10 +233,19 @@ network calls, the Keychain, notifications and the panel are not under test.
 
 On first launch macOS asks to allow notifications.
 
-The Keychain is only read when a live Claude call is actually needed, which the
-cache usually avoids, so the `Claude Code-credentials` prompt should be rare. If
-it does appear, choose Always Allow. Rebuilding the app re-signs it and voids
-that decision, so expect to answer once more after a rebuild.
+The `Claude Code-credentials` Keychain item is read once per launch, the first
+time a live Claude call is needed, and the token is then held in memory. It is
+read again only when the API rejects the held token, which is what a rotation
+by Claude Code looks like. Choose Always Allow at the prompt and it will not
+come back until the next rebuild.
+
+Rebuilding re-signs the app, and macOS ties that Keychain decision to the
+signature, so an ad-hoc build asks once more after every rebuild. To make the
+decision stick, give the build a stable identity: in Keychain Access, choose
+Keychain Access, Certificate Assistant, Create a Certificate, name it
+`AI CLI Limits`, set the type to Code Signing, and create it in the login
+keychain. `build.sh` picks that certificate up by name from then on, or set
+`SIGN_IDENTITY` to use another.
 
 To start it with your Mac, use the toggle in Settings. The registration is tied
 to the bundle's code signature, so rebuilding drops it; the app re-asserts it on

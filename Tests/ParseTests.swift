@@ -89,6 +89,25 @@ private func json(_ text: String) throws -> [String: Any] {
         #expect(cached.snapshot.plan == nil)
     }
 
+    @Test func cache_is_alive_when_nothing_has_been_used_yet() throws {
+        // Before the first prompt of a window Claude reports 0% and no reset time.
+        let root = try json("""
+        {"cachedUsageUtilization": {"fetchedAtMs": 1790479373443,
+          "utilization": {"five_hour": {"utilization": 0, "resets_at": null}}}}
+        """)
+        let cached = try #require(Fetch.claudeCached(root))
+        #expect(cached.windowAlive)
+    }
+
+    @Test func cache_is_dead_when_used_but_the_reset_time_is_missing() throws {
+        let root = try json("""
+        {"cachedUsageUtilization": {"fetchedAtMs": 1790479373443,
+          "utilization": {"five_hour": {"utilization": 20, "resets_at": null}}}}
+        """)
+        let cached = try #require(Fetch.claudeCached(root))
+        #expect(!cached.windowAlive)
+    }
+
     @Test func cache_without_the_expected_keys_is_nil() throws {
         #expect(Fetch.claudeCached(try json(#"{"cachedUsageUtilization": {"fetchedAtMs": 1}}"#)) == nil)
         #expect(Fetch.claudeCached(try json(#"{"numStartups": 4}"#)) == nil)

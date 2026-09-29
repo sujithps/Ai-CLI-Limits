@@ -38,5 +38,18 @@ swiftc -O -swift-version 5 -target "$TARGET" $SDK \
   -framework ServiceManagement -framework Security -lsqlite3 \
   -o "$BIN" Sources/*.swift
 
-codesign --force --sign - "$APP"
+# The Keychain's "Always Allow" is tied to the signature, and an ad-hoc
+# signature changes on every build, so a rebuild brings the prompt back. A
+# certificate named "AI CLI Limits" in the login keychain keeps it stable; see
+# the README for making one. SIGN_IDENTITY overrides, "-" is ad-hoc.
+IDENTITY="${SIGN_IDENTITY:-}"
+if [ -z "$IDENTITY" ]; then
+  if security find-identity -v -p codesigning 2>/dev/null | grep -q '"AI CLI Limits"'; then
+    IDENTITY="AI CLI Limits"
+  else
+    IDENTITY="-"
+  fi
+fi
+codesign --force --sign "$IDENTITY" "$APP"
+echo "signed as $IDENTITY"
 echo "built $APP"
